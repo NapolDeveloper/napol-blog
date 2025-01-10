@@ -16,4 +16,6 @@ export interface PostInfoData {
   slug: string;
 }
 
-export interface Post extends PostMatter, PostMetaData, PostInfoData {}
+export interface Post extends PostMatter, PostMetaData, PostInfoData {
+  content: string;
+}
