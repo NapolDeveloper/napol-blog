@@ -26,7 +26,7 @@ export default async function PostDetailPage({ params }: Props) {
   const toc = parseToc(post.content);
 
   return (
-    <div className="prose dark:prose-invert mx-auto w-full max-w-[800px] px-0 sm:px-6">
+    <div className="prose dark:prose-invert mx-auto w-full max-w-[800px] px-0">
       <PostHeader post={post} />
       <article className="relative">
         <PostBody post={post} />
