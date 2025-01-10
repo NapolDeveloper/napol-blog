@@ -31,7 +31,7 @@ export default function PostCard({ post }: Props) {
           </AspectRatio>
         </div>
         <div className="mt-6 flex flex-col">
-          <Text size="2xl" weight="bold" className="mb-1 line-clamp-2">
+          <Text size="xl" weight="bold" className="mb-1 line-clamp-2">
             {post.title}
           </Text>
           <div className="flex items-center gap-1">
@@ -40,7 +40,7 @@ export default function PostCard({ post }: Props) {
               {post.dateString}
             </Text>
           </div>
-          <div className="mt-4 flex items-center gap-2">
+          <div className="mt-2 flex items-center gap-2">
             {post.tag?.map((tag, index) => <PostTagBadge key={tag + index}>{tag}</PostTagBadge>)}
           </div>
         </div>

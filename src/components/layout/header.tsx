@@ -9,8 +9,8 @@ const NAV_LIST = [
 
 export default function Header() {
   return (
-    <nav className="fixed z-40 flex w-full flex-col items-center justify-center border-b bg-background shadow-sm print:hidden">
-      <div className="flex h-[64px] w-full items-center justify-between px-6 sm:px-12">
+    <nav className="fixed z-40 flex w-full flex-col items-center justify-center border-b bg-background px-6 shadow-sm print:hidden">
+      <div className="mx-auto flex h-[64px] w-full max-w-[800px] items-center justify-between">
         {NAV_LIST.map(item => (
           <Link href={item.path} key={item.name}>
             {item.name}
