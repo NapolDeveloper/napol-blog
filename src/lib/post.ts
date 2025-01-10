@@ -70,6 +70,7 @@ const parsePostDetail = async (postPath: string) => {
 
   return {
     ...grayMatter,
+    tag: grayMatter.tag ?? [],
     dateString,
     content,
   };
