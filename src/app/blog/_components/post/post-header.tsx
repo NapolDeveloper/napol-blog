@@ -1,12 +1,8 @@
 import Link from 'next/link';
 import { CalendarDays } from 'lucide-react';
 
-import { Link as LinkIcon } from 'lucide-react';
-
 import { Text } from '@/components/ui/text';
 import { Post } from '@/models/post';
-import IconButton from '@/components/shared/icon-button';
-import { Button } from '@/components/ui/button';
 
 interface Props {
   post: Post;

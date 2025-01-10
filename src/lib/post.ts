@@ -80,7 +80,7 @@ const parsePostDetail = async (postPath: string) => {
  * @param postPath 포스트 경로
  * @return 포스트 추가 정보 객체
  */
-const parsePostInfo = (postPath: string) => {
+export const parsePostInfo = (postPath: string) => {
   const normalizedPath = postPath.split(path.sep).join('/');
   const filePath = normalizedPath
     .slice(normalizedPath.indexOf(BASE_PATH))

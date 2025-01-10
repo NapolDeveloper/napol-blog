@@ -1,6 +1,422 @@
 ---
-title: '넥스트2'
+title: 'Jotai를 곁들여서 만든 전역 토스트 관리'
 desc: 테스트
 date: 2025-12-09
 thumbnail: /posts/test/news.png
 ---
+
+## 타이틀 테스트
+
+모시기모시기모시기
+
+## 타이틀
+
+모시기모시기모시기
+
+```bash
+# API route 에서 사용할 환경 변수
+PAYPAL_CLIENT_ID="<cliend id>"
+PAYPAL_CLIENT_SECRET="<client secret>"
+
+# 브라우저 내 paypal client에서 사용할 환경 변수
+NEXT_PUBLIC_PAYPAL_CLIENT_ID="<client id>"
+```
+
+이번 글에서는 제가 참여하는 사내 프로젝트에서 사용하기 위해 토스트를 만들었던 과정을 정리하여 글로 남겨 보려고 합니다.
+
+먼저, 토스트란 무엇일까요?
+웹 서비스에서는 사용자의 액션에 따른 피드백을 제공해야 하는 경우가 많습니다. 토스트는 이런 상황에서 사용할 수 있는 UI 요소입니다. 작은 팝업 형태로, 간단한 피드백을 제공할 수 있습니다. 아래와 같은 사진을 예시로 들 수 있습니다.
+
+![](https://velog.velcdn.com/images/napol/post/09aa1064-d9aa-4826-aecd-3b583a2fb6e1/image.png)
+
+지금부터 위 사진의 토스트를 만들어볼 거에요!
+
+> 레퍼런스는 아래 블로그를 참고했습니다
+> [감사합니다 :D](https://www.halang.tech/making-toast)
+
+## Toast 컴포넌트 만들기
+
+위 사진의 토스트는 `아이콘`, `텍스트` 두 가지 요소로 구성되어 있습니다. 그리고 토스트 안에 많은 양의 데이터를 담기에는 부담스러울 것 같네요. 토스트 타입을 지정해서 아이콘과 함께 사용자에게 피드백을 제공하는 게 좋을 것 같습니다.
+
+먼저 토스트 컴포넌트의 기본 틀은 아래와 같이 작성하였습니다.
+
+```typescript
+import React from 'react';
+import styled, { css } from 'styled-components';
+
+// icons
+import { IoCheckmarkCircle } from 'react-icons/io5';
+import { IoMdInformationCircle } from 'react-icons/io';
+import { IoWarning } from 'react-icons/io5';
+import { MdError } from 'react-icons/md';
+
+export type ToastType = 'success' | 'info' | 'error' | 'warn';
+
+interface ToastStyle {
+  type?: ToastType;
+}
+
+export interface ToastProps extends ToastStyle {
+  message?: string;
+  id: string;
+}
+// 미리 정의된 토스트 스타일을 반환해주는 함수
+const getToastStyles = (type?: ToastType) => {
+  switch (type) {
+    case 'success':
+      return css`
+        color: #61f272;
+      `;
+    case 'info':
+      return css`
+        color: #03b9ff;
+      `;
+    case 'warn':
+      return css`
+        color: #fff028;
+      `;
+    case 'error':
+      return css`
+        color: #ff2c51;
+      `;
+    default:
+      return css``;
+  }
+};
+
+// 미리 정의된 토스트 아이콘을 반환해주는 함수
+const getToastIcon = (type?: ToastType) => {
+  switch (type) {
+    case 'success':
+      return <IoCheckmarkCircle />;
+    case 'info':
+      return <IoMdInformationCircle />;
+    case 'warn':
+      return <IoWarning />;
+    case 'error':
+      return <MdError />;
+    default:
+      return null;
+  }
+};
+
+const Toast = ({ type, message = 'test', id }: ToastProps) => {
+  return (
+    <ToastContainer key={id}>
+      <ToastIcon type={type}>{getToastIcon(type)}</ToastIcon>
+      <ToastContent>{message}</ToastContent>
+    </ToastContainer>
+  );
+};
+
+export default Toast;
+
+const ToastContainer = styled.div<{ opacity: number }>`
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background-color: #171b1c;
+  border-radius: 8px;
+`;
+
+const ToastIcon = styled.div<ToastStyle>`
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+  margin-right: 8px;
+  ${({ type }) => css`
+    ${getToastStyles(type)}
+  `};
+`;
+
+const ToastContent = styled.div`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-weight: 600;
+  font-size: 14px;
+  color: #f7f8f9;
+`;
+
+```
+
+토스트 컴포넌트는 props로 `type`, `message`, `id`를 받도록 구현했습니다. `type`을 통해 미리 지정해둔 색상과 아이콘을 렌더링하도록 구현하였고, `id`값은 이후에 특정 토스트를 삭제하기 위해서 받았습니다.
+
+토스트 컴포넌트는 구현했으니, 전역 상태에서 토스트 컴포넌트를 관리해줄 코드를 작성해야겠지요?
+상태관리 라이브러리는 `jotai`를 채택했습니다. `jotai`라이브러리에 관한 자세한 내용은 아래 링크를 참고해주세요!
+
+> [jotai 공식문서](https://jotai.org/docs/introduction)
+
+## toast atom 만들기
+
+먼저 토스트는 여러개가 렌더링 될 수 있으므로 배열 형태의 상태값을 만들었습니다.
+
+```typescript
+export const toastsAtom = atom<ToastProps[]>([]);
+```
+
+atom의 타입인 `ToastProps`는 `Toast`컴포넌트에서 가져왔습니다. `toastsAtom`에서는 렌더링 할 토스트 목록을 저장합니다.
+
+다음으로는 `toastsAtom`에 토스트 목록을 추가하는 코드가 필요하겠죠?
+
+### toast 추가 atom 만들기
+
+```typescript
+export const toastAtom = atom(null, (get, set, type: ToastType) => (message: string) => {
+  const prevAtom = get(toastsAtom);
+  const newToast = {
+    type,
+    message,
+    id: Date.now().toString(),
+  };
+
+  set(toastsAtom, [...prevAtom, newToast]);
+});
+```
+
+코드를 보면 atom() 함수의 첫번째 인자로 null을 넣었는데요? 공식 문서에도 예제로 나와있고, 관례라고 합니다. 다음으로는 커링형태로 구현했습니다.
+
+```typescript
+(get, set, type: ToastType) => (message: string) => {...}
+```
+
+`atom`을 `write`할 때 `type`을 넘겨주면 `(message: string) => {}`를 반환해줍니다.
+`id`의 값은 고유한 값이 필요하기 때문에 토스트가 생성되는 시점을 문자열로 변경하여 넣어주도록 했습니다.
+
+다음으로는 토스트를 삭제하는 기능을 만들어볼까요?
+
+### toast 삭제 atom 만들기
+
+```typescript
+export const removeToastAtom = atom(null, (get, set, id: string) => {
+  const prev = get(toastsAtom);
+  set(
+    toastsAtom,
+    prev.filter(toast => toast.id !== id)
+  );
+});
+```
+
+`removeToastAtom`에서는 `id`값을 인자로 받아와서 토스트 목록을 가지고 있는 `toastsAtom`을 순회하며 인자값과 동일하지 않은 `id`값 객체들만 새로운 배열로 만들어줍니다. 그 이후 `toastsAtom`값을 변경해줍니다.
+
+드디어 토스트 상태관리 세팅이 끝났습니다! 다음으로는 이 토스트들을 편하게 사용하기 위한 커스텀훅을 구현하겠습니다.
+
+## 토스트 커스텀훅 (useToast)
+
+```typescript
+const useToast = () => {
+  const addToast = useSetAtom(toastAtom);
+
+  return {
+    success: addToast('success'),
+    error: addToast('error'),
+    info: addToast('info'),
+    warn: addToast('warn'),
+  };
+};
+
+export default useToast;
+```
+
+`useToast`는 `success: addToast('success')`와 같은 형태로 총 4개를 반환해줍니다.
+이런식으로 구현하면 `addToast('success')('토스트메시지')`와 같은 형태로 사용해야하는 함수를 `success('토스트메시지')`처럼 사용할 수 있습니다.
+
+다음으로는 토스트 컴포넌트를 렌더링해줄 `Provider`를 구현하겠습니다.
+
+## ToastProvider
+
+```typescript
+const ToastProvider = () => {
+  const toasts = useAtomValue(toastsAtom);
+  const portalRoot = document.getElementById('toast-portal');
+
+  if (!portalRoot) {
+    return null;
+  }
+
+  return ReactDOM.createPortal(
+    <Container>
+      {toasts?.map((toast: any) => (
+        <Toast key={toast.id} {...toast} />
+      ))}
+    </Container>,
+    portalRoot
+  );
+};
+
+export default ToastProvider;
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: absolute;
+  gap: 20px;
+  top: 20px;
+  left: 50%;
+  transform: translate(-50%, 0);
+`;
+```
+
+토스트 컴포넌트는 다른 컴포넌트들의 영향을 받지 않도록 구현하기 위해서 `ReactDOM`의 `createPortal`을 이용했습니다. `root`와 동일한 위치에서 렌더링하기 위해 `index.html`파일에 아래와 같이 토스트를 출력할 경로를 추가해주었습니다.
+
+```html
+<div id="root"></div>
+<div id="toast-portal"></div>
+```
+
+마지막으로 토스트 컴포넌트가 일정 시간이 지나면 사라지도록 구현하고 마무리 하겠습니다.
+
+## 토스트 컴포넌트 사라지게 만들기
+
+```typescript
+const TOAST_DURATION = 3000;
+const ANIMATION_DURATION = 350;
+
+export type ToastType = 'success' | 'info' | 'error' | 'warn';
+
+interface ToastStyle {
+  type?: ToastType;
+}
+
+export interface ToastProps extends ToastStyle {
+  message?: string;
+  id: string;
+}
+// 미리 정의된 토스트 스타일을 반환해주는 함수
+const getToastStyles = (type?: ToastType) => {
+  switch (type) {
+    case 'success':
+      return css`
+        color: #61f272;
+      `;
+    case 'info':
+      return css`
+        color: #03b9ff;
+      `;
+    case 'warn':
+      return css`
+        color: #fff028;
+      `;
+    case 'error':
+      return css`
+        color: #ff2c51;
+      `;
+    default:
+      return css``;
+  }
+};
+
+// 미리 정의된 토스트 아이콘을 반환해주는 함수
+const getToastIcon = (type?: ToastType) => {
+  switch (type) {
+    case 'success':
+      return <IoCheckmarkCircle />;
+    case 'info':
+      return <IoMdInformationCircle />;
+    case 'warn':
+      return <IoWarning />;
+    case 'error':
+      return <MdError />;
+    default:
+      return null;
+  }
+};
+
+const Toast = ({ type, message = 'test', id }: ToastProps) => {
+  const [opacity, setOpacity] = useState<number>(0.2);
+  const removeToastItem = useSetAtom(removeToastAtom);
+
+  useEffect(() => {
+    setOpacity(1);
+    const timeoutForRemove = setTimeout(() => {
+      removeToastItem(id);
+    }, TOAST_DURATION);
+
+    const timeoutForVisible = setTimeout(() => {
+      setOpacity(0);
+    }, TOAST_DURATION - ANIMATION_DURATION);
+
+    return () => {
+      clearTimeout(timeoutForRemove);
+      clearTimeout(timeoutForVisible);
+    };
+  }, [id, removeToastItem]);
+
+  return (
+    <ToastContainer key={id} opacity={opacity}>
+      <ToastIcon type={type}>{getToastIcon(type)}</ToastIcon>
+
+      <ToastContent>{message}</ToastContent>
+    </ToastContainer>
+  );
+};
+
+export default Toast;
+
+const ToastContainer = styled.div<{ opacity: number }>`
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background-color: #171b1c;
+  border-radius: 8px;
+  transition: all 0.35s ease-in-out;
+  opacity: ${({ opacity }) => opacity || 0.2};
+  transform: translateY(${({ opacity }) => (opacity === 0 ? '-10px' : '0')});
+`;
+
+const ToastIcon = styled.div<ToastStyle>`
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+  margin-right: 8px;
+  ${({ type }) => css`
+    ${getToastStyles(type)}
+  `};
+`;
+
+const ToastContent = styled.div`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-weight: 600;
+  font-size: 14px;
+  color: #f7f8f9;
+`;
+```
+
+## 사용해보기
+
+이렇게 구현이 끝났다면 사용 방법은 간단합니다. 사용할 파일에서 `useToast`훅을 임포트합니다. 이후 아래 코드와 같이 toast가 반환해주는 `success`, `info`, `warn`, `error`와 함께 출력할 텍스트를 입력하면 됩니다.
+
+```typescript
+import ToastProvider from './components/ToastProvider';
+
+import useToast from './hooks/useToast';
+
+function App() {
+  const toast = useToast();
+  return (
+    <div>
+      <ToastProvider />
+
+      <Container>
+        <button onClick={() => toast.warn('아이디와 비밀번호를 확인해주세요.')}>warn</button>
+      </Container>
+    </div>
+  );
+}
+```
+
+현재 코드는 `ToastProvider`가 다른 코드와 함께있어 보기에 좋지 않은데, 다른 `Provider`들을 묶어서 사용하면 더 좋겠죠?
+
+실행 결과가 아래와 같이 나온다면 성공입니다!
+![](https://velog.velcdn.com/images/napol/post/eecb80d7-332f-4b14-889b-7c959d3bcd1a/image.gif)
+
+긴 글 읽어주셔서 감사합니다 :D
