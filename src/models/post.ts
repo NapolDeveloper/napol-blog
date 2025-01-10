@@ -3,6 +3,7 @@ export interface PostMatter {
   desc: string;
   date: Date;
   thumbnail: string;
+  tag: string[];
 }
 
 export interface PostMetaData {
