@@ -5,7 +5,6 @@ import remarkBreaks from 'remark-breaks';
 
 import rehypePrettyCode from 'rehype-pretty-code';
 import rehypeSlug from 'rehype-slug';
-import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeToc from 'rehype-toc';
 
 interface Props {
@@ -22,7 +21,6 @@ export default function PostBody({ post }: Props) {
           rehypePlugins: [
             rehypeSlug,
             rehypePrettyCode,
-            [rehypeAutolinkHeadings, { behavior: 'wrap' }],
             [
               rehypeToc,
               {
