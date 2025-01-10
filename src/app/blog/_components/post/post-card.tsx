@@ -6,6 +6,7 @@ import { Text } from '@/components/ui/text';
 
 import { CalendarDays } from 'lucide-react';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import PostTagBadge from '@/components/shared/post-tag-badge';
 
 interface Props {
   post: Post;
@@ -38,6 +39,9 @@ export default function PostCard({ post }: Props) {
             <Text size="sm" color={'muted'}>
               {post.dateString}
             </Text>
+          </div>
+          <div className="mt-4 flex items-center gap-2">
+            {post.tag?.map((tag, index) => <PostTagBadge key={tag + index}>{tag}</PostTagBadge>)}
           </div>
         </div>
       </div>
