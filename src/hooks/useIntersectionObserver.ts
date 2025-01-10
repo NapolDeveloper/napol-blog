@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 /**
  * 헤더의 활성 상태와 계층 구조를 추적하는 커스텀 훅
@@ -10,13 +10,18 @@ export function useHeaderObserver(selectors: string, options?: IntersectionObser
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeHierarchy, setActiveHierarchy] = useState<string[]>([]); // 활성화된 헤더 계층
 
-  useEffect(() => {
-    const elements = document.querySelectorAll(selectors);
-    const observerOptions = {
+  // useMemo로 안정화된 옵션 객체 생성
+  const observerOptions = useMemo(
+    () => ({
       root: options?.root || null,
       rootMargin: options?.rootMargin || '0px 0px -80% 0px',
       threshold: options?.threshold || 0,
-    };
+    }),
+    [options?.root, options?.rootMargin, options?.threshold]
+  );
+
+  useEffect(() => {
+    const elements = document.querySelectorAll(selectors);
 
     const observerCallback = (entries: IntersectionObserverEntry[]) => {
       const visibleHeaders: { id: string; level: number }[] = [];
@@ -50,7 +55,7 @@ export function useHeaderObserver(selectors: string, options?: IntersectionObser
     return () => {
       elements.forEach(el => observer.unobserve(el));
     };
-  }, [selectors, options]);
+  }, [selectors, observerOptions]);
 
   return { activeId, activeHierarchy };
 }
