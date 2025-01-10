@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import { PostMatter } from '@/models/post';
+import { HeadingItem, PostMatter } from '@/models/post';
 import dayjs from 'dayjs';
 
 const BASE_PATH = 'src/posts';
@@ -92,6 +92,30 @@ export const parsePostInfo = (postPath: string) => {
   const url = `/blog/${category}/${slug}`;
 
   return { url, category, slug };
+};
+
+/**
+ * 목차 데이터를 파싱합니다.
+ * @param content mdx 컨텐츠
+ */
+export const parseToc = (content: string): HeadingItem[] => {
+  const regex = /^(##|###) (.*$)/gim;
+  const headingList = content.match(regex);
+  return (
+    headingList?.map((heading: string) => ({
+      text: heading.replace('##', '').replace('#', ''),
+      link:
+        '#' +
+        heading
+          .replace('# ', '')
+          .replace('#', '')
+          .replace(/[\[\]:!@#$/%^&*()+=,.]/g, '')
+          .replace(/ /g, '-')
+          .toLowerCase()
+          .replace('?', ''),
+      indent: (heading.match(/#/g)?.length || 2) - 2,
+    })) || []
+  );
 };
 
 /**
