@@ -19,3 +19,9 @@ export interface PostInfoData {
 export interface Post extends PostMatter, PostMetaData, PostInfoData {
   content: string;
 }
+
+export interface HeadingItem {
+  text: string;
+  link: string;
+  indent: number;
+}
