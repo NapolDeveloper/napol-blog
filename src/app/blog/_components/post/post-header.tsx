@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CalendarDays } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 
 import { Text } from '@/components/ui/text';
 import { Post } from '@/models/post';
@@ -26,7 +26,7 @@ export default function PostHeader({ post }: Props) {
 
       {/* 작성일 */}
       <div className="mt-4 flex items-center justify-center gap-2">
-        <CalendarDays className="w-3.5 text-muted-foreground" />
+        <Calendar className="w-3.5 text-muted-foreground" />
         <Text size="sm" color={'muted'}>
           {post.dateString}
         </Text>
