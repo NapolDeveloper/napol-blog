@@ -1,9 +1,16 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import { ThemeProvider } from '@/components/provider/theme-provider';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
+
+const pretendard = localFont({
+  src: '../fonts/PretendardVariable.woff2',
+  variable: '--font-pretendard',
+  display: 'swap',
+});
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -27,7 +34,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className="h-full scroll-my-20 scroll-smooth" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col antialiased`}>
+      <body
+        className={`${pretendard.variable} ${geistSans.variable} ${geistMono.variable} font-pretendard flex min-h-screen flex-col antialiased`}
+      >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <Header />
           <main className="mx-auto mt-[114px] w-full max-w-[800px]">{children}</main>
