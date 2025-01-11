@@ -1,6 +1,7 @@
 'use client';
+
 import Link from 'next/link';
-import { ModeToggle } from '../shared/mode-toggle';
+import ThemeToggle from '../shared/theme-toggle';
 
 const NAV_LIST = [
   { name: 'Napol', path: '/blog' },
@@ -19,7 +20,7 @@ export default function Header() {
             </Link>
           ))}
         </div>
-        <ModeToggle />
+        <ThemeToggle />
       </div>
     </nav>
   );
