@@ -4,6 +4,7 @@ import { Calendar } from 'lucide-react';
 import { Text } from '@/components/ui/text';
 import { Post } from '@/models/post';
 import PostTagBadge from '@/components/shared/post-tag-badge';
+import { parseCategoryName } from '@/lib/post';
 
 interface Props {
   post: Post;
@@ -21,7 +22,7 @@ export default function PostHeader({ post }: Props) {
         href={`/blog/${post.category}`}
         className="font-semibold text-blue-600 no-underline underline-offset-4 hover:underline"
       >
-        {post.category}
+        {parseCategoryName(post.category)}
       </Link>
 
       {/* 작성일 */}

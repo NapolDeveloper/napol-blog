@@ -43,6 +43,18 @@ export const getPostPaths = (category?: string): string[] => {
 };
 
 /**
+ * 카테고리명을 포맷팅된 문자열로 변환합니다.
+ * @param category 카테고리명 (예: "tech", "deep_dive")
+ * @returns 포맷팅된 카테고리명 (예: "Tech", "Deep Dive")
+ */
+export const parseCategoryName = (category: string): string => {
+  return category
+    .split('_') // 언더스코어를 기준으로 분리
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()) // 각 단어의 첫 글자를 대문자로
+    .join(' '); // 단어를 공백으로 연결
+};
+
+/**
  * MDX 확장자인 포스트 파일을 파싱합니다.
  * @param postPath 포스트 경로
  * @return 포스트 객체
