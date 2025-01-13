@@ -6,7 +6,7 @@ import Link from 'next/link';
 export default function Footer() {
   return (
     <footer className="mx-auto h-44 w-full max-w-[800px] bg-background pb-8">
-      <div className="flex h-full w-full flex-col items-end justify-end gap-1">
+      <div className="flex h-full w-full flex-col items-end justify-end gap-1 px-6">
         <div className="flex items-center gap-2">
           <Link href="mailto:loma1016@gmail.com">
             <Mail className="w-5 transition hover:text-blue-500" />
