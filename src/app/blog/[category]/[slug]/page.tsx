@@ -8,10 +8,11 @@ import TableOfContent from '../../_components/post/table-of-content-sidebar';
 import { siteConfig } from '@/config/site';
 
 interface Props {
-  params: { slug: string; category: string };
+  params: Promise<{ slug: string; category: string }>;
 }
 
-export async function generateMetadata({ params: { category, slug } }: Props): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug, category } = await params;
   const post = await getPostDetail(category, slug);
 
   const title = `${post.title} | NAPOL`;
