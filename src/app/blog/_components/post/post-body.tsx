@@ -20,16 +20,7 @@ export default function PostBody({ post }: Props) {
       options={{
         mdxOptions: {
           remarkPlugins: [remarkGfm, remarkBreaks],
-          rehypePlugins: [
-            rehypeSlug,
-            rehypePrettyCode,
-            [
-              rehypeToc,
-              {
-                headings: ['h1', 'h2', 'h3'], // 목차에 포함할 헤딩
-              },
-            ],
-          ],
+          rehypePlugins: [rehypeSlug, rehypePrettyCode],
         },
       }}
     />
