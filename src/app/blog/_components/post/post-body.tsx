@@ -6,6 +6,7 @@ import remarkBreaks from 'remark-breaks';
 import rehypePrettyCode from 'rehype-pretty-code';
 import rehypeSlug from 'rehype-slug';
 import rehypeToc from 'rehype-toc';
+import { MdxComponents } from '@/components/mdx';
 
 interface Props {
   post: Post;
@@ -15,6 +16,7 @@ export default function PostBody({ post }: Props) {
   return (
     <MDXRemote
       source={post.content}
+      components={MdxComponents}
       options={{
         mdxOptions: {
           remarkPlugins: [remarkGfm, remarkBreaks],
