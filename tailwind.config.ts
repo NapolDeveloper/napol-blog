@@ -22,6 +22,7 @@ export default {
             'code::after': { content: '""' }, // 백틱 제거
             code: {
               backgroundColor: 'hsl(var(--muted))',
+              fontWeight: '600',
               padding: '2px 4px',
               borderRadius: '4px',
             },
