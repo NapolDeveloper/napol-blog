@@ -5,6 +5,9 @@ import type { Config } from 'tailwindcss';
 
 export default {
   darkMode: ['class'],
+  variants: {
+    typography: ['dark'],
+  },
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -12,6 +15,19 @@ export default {
   ],
   theme: {
     extend: {
+      typography: {
+        DEFAULT: {
+          css: {
+            'code::before': { content: '""' }, // 백틱 제거
+            'code::after': { content: '""' }, // 백틱 제거
+            code: {
+              backgroundColor: 'hsl(var(--muted))',
+              padding: '2px 4px',
+              borderRadius: '4px',
+            },
+          },
+        },
+      },
       fontFamily: {
         pretendard: ['var(--font-pretendard)', 'sans-serif'],
         roboto: ['var(--font-roboto)', 'sans-serif'],
