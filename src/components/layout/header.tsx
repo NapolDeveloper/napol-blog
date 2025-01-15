@@ -6,7 +6,7 @@ import IndicatorScroll from '../shared/indicator-scroll';
 
 const NAV_LIST = [
   { name: 'Napol', path: '/blog' },
-  { name: 'Home', path: '/home' },
+  // { name: 'Home', path: '/home' },
   { name: 'Blog', path: '/blog' },
 ];
 
