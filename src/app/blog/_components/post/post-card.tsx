@@ -21,8 +21,7 @@ export default function PostCard({ post }: Props) {
             <AspectRatio ratio={16 / 9}>
               <Image
                 // !TODO 추후 썸네일 추가시 주석 해제
-                // src={post.thumbnail}
-                src={'/news.png'}
+                src={post.thumbnail || '/news.png'}
                 alt={`thumbnail for ${post.title}`}
                 sizes="(max-width: 1000px) 50vw, 450px"
                 fill
