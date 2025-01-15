@@ -1,7 +1,7 @@
 ---
 title: '호이스팅? TDZ? 그게 뭔데'
 desc: var, let, const 그리고 프론트엔드 면접 단골 질문 호이스팅과 TDZ. 면접관보다 자세히 알아보자.
-date: 2025-01-20
+date: 2025-01-16
 thumbnail: /posts/deep_dive/hoisting/thumbnail.png
 ---
 
@@ -227,13 +227,15 @@ let value = 10;
 
 여기까지 잘 읽었다면 누군가에게 `호이스팅` 이 무엇인지, `TDZ` 가 무엇인지에 대해 간략하게 설명할 수 있는 수준이 되었을 것이다.
 
-하지만 우리는 한 단계 더 나아가 보려고 한다. 자바스크립트를 해석하고 실행하는 `v8` 엔진에서는 `var`, `let`, `const` 키워드를 이용할 때 어떤 방식으로 처리하는지 알아보자.
+여기서 필자는 한 단계 더 나아가 보려고 한다. 자바스크립트를 해석하고 실행하는 `v8` 엔진에서는 `var`, `let`, `const` 키워드를 이용할 때 어떤 방식으로 처리하는지 알아보자.
 
 ## v8
 
-필자는 `c++` 을 사용할 줄 몰라서 gpt와 함께 `v8` 엔진 코드를 분석해 보았다.
+`v8` 엔진은 `c++`로 작성되어 있다. 하지만 필자는 `c++` 을 사용할 줄 모르기 때문에 gpt와 함께 `v8` 엔진 코드를 분석해 보았다.
 
-변수 선언은 `Parser::DeclareVariable` 함수에서 처리된다.
+### 변수 선언
+
+먼저 변수 선언의 시작은 `Parser::DeclareVariable` 함수에서 처리된다.
 
 ```c++
 // /src/parsing/parser.cc
@@ -253,3 +255,91 @@ Variable* Parser::DeclareVariable(const AstRawString* name, VariableKind kind,
   return declaration->var();
 }
 ```
+
+`DeclareVariable` 함수는 `VariableMode` 타입의 `mode` 라는 매개변수를 받고 있다. 필자가 확인한 바로는 `mode` 의 값으로 `kVar` , `kLet`, `kConst` 를 사용할 수 있다. 즉, 모드에 따라 변수를 선언하는 키워드를 분기하는 로직이 있을 것이라고 예상된다.
+
+추가로, 필자는 왜 접두사로 `k` 를 붙였는지 궁금해서 gpt에게 물어봤는데, c++ 코드에서 `enum` 또는 `상수` 값의 식별자로 `k` 를 붙이는 것이 관례라고 한다. ~~(지피티 피셜이니 맹신하지는 말자)~~
+
+다음 흐름으로 넘어가보자. 조건문에서는 변수를 선언할 때 `kVar` 모드이며 `선언 스코프` 가 아닌지 확인한다. `선언 스코프` 란 `함수 스코프`를 의미한다. 이후 `mode` 값에 따라 `NewNestedVariableDeclaration` 함수를 사용할 것인지, `NewVariableDeclaration` 함수를 사용할 것인지 결정하게 된다.
+
+```c++
+// /src/ast/ast.h
+
+NestedVariableDeclaration* NewNestedVariableDeclaration(Scope* scope,
+                                                        int pos) {
+  return zone_->New<NestedVariableDeclaration>(scope, pos);
+}
+
+VariableDeclaration* NewVariableDeclaration(int pos) {
+  return zone_->New<VariableDeclaration>(pos);
+}
+```
+
+분기처리 후 사용하는 함수가 정의되어 있는 헤더 파일을 살펴보면, 두 함수의 공통 부분에서 `zone_` 이라는 키워드가 보인다.
+gpt에 따르면, 이는 효율적인 메모리 할당을 위해 사용되는 키워드라고 한다.
+
+두 함수의 차이점으로는 매개변수 `scope` 의 유무가 있다. `kVar` 모드의 변수는 상위 스코프와 연결되어야 하기 때문에 `scope` 값을 사용한다. 반면, `kLet` 과 `kConst` 모드의 변수는 `AST` 및 `스코프 체인` 을 통해 관리되므로 따로 명시하지 않아도 선언된 블록의 `Scope` 객체에 자동으로 추가된다.
+
+| 특징                      | `var`                          | `let` / `const`               |
+| ------------------------- | ------------------------------ | ----------------------------- |
+| **스코프**                | 함수 스코프 또는 전역 스코프   | 블록 스코프                   |
+| **스코프 정보 필요 여부** | 필요 (상위 스코프 연결)        | 불필요 (선언된 블록에서 관리) |
+| **호출 함수**             | `NewNestedVariableDeclaration` | `NewVariableDeclaration`      |
+
+### 메모리 할당 및 초기화
+
+`var` 와 `let` , `const` 는 선언과 동시에 초기화 여부가 서로 달랐다. 그렇다면 `v8` 에서는 이 둘을 분기하는 코드를 보자.
+
+```c++
+// /src/ast/variables.h
+
+  static InitializationFlag DefaultInitializationFlag(VariableMode mode) {
+    DCHECK(IsDeclaredVariableMode(mode));
+    return mode == VariableMode::kVar ? kCreatedInitialized
+                                      : kNeedsInitialization;
+  }
+```
+
+`InitializationFlag` 라는 이름만 봐도 초기화 여부를 결정하는 함수임을 알 수 있다. 이 함수의 동작은 간단하다. `kVar` 모드라면 `kCreatedInitialized` 값을 반환하고, 그 외의 값이라면 `kNeedsInitialization` 을 반환한다.
+
+`let` 과 `const` 를 사용해서 변수를 선언하면 `TDZ` 영역에서 접근을 시도할 때 `ReferenceError: Cannot access '' before initialization` 에러가 발생했었다. 즉, `kNeedsInitialization` 값을 받으면 초기화 전에 접근을 하지 못하도록 하는 키워드임을 알 수 있다.
+
+다음으로 `kVar` 모드라면 선언과 동시에 `undefined` 로 초기화를 해주어야 하므로 메모리를 할당해야 하낟. 그래서 `kVar` 의 경우 메모리를 할당하는 코드를 찾아보았지만, 클론받은 패키지에서는 찾지 못했다..
+
+그래서 구글링을 통해 구글 깃이라는 곳에서 확인했다. 아래 주소의 532번째 줄을 참고하면 된다.
+
+[kVar 모드 메모리 할당](https://chromium.googlesource.com/v8/v8/+/bd68cc82342f71c295b77bf7fc1935b77a19fbdc/src/parsing/parser.cc)
+
+```c++
+auto var = scope->DeclareParameter(name, VariableMode::kVar, is_optional,
+                                         is_rest, &is_duplicate,
+                                         ast_value_factory(), beg_pos);
+      DCHECK(!is_duplicate);
+      var->AllocateTo(VariableLocation::PARAMETER, 0);
+```
+
+`kVar` 모드라면 변수 객체를 생성한 후 `AllocateTo` 함수를 통해 메모리를 할당한다. 하지만 `kLet` 과 `kConst` 모드는 다르다.
+
+```c++
+// /src/parsing/parser.cc
+
+VariableProxy* tdz_proxy = DeclareBoundVariable(
+    bound_name, VariableMode::kLet, kNoSourcePosition);
+tdz_proxy->var()->set_initializer_position(position());
+
+VariableProxy* proxy =
+    DeclareBoundVariable(local_name, VariableMode::kConst, pos);
+proxy->var()->set_initializer_position(position());
+```
+
+`kLet` 과 `kConst` 모드로 생성한 변수 객체는 메모리를 할당하는 `AllocateTo` 함수 대신 `set_initializer_position` 함수의 매개변수로 `position` 값을 넘겨주고 있다.
+
+`kVar` 모드와 다르게 `kLet` 과 `kConst` 모드는 메모리를 할당 받지 못했고 이 시점에 변수에 접근하려고 한다면 `ReferenceError: Cannot access '' before initialization` 가 발생하는 것이다.
+
+## 마무리
+
+이번 포스팅을 통해 `var`, `let`, `const` 키워드의 차이점과 각 키워드가 어떻게 동작하는지를 살펴보았다. 특히, 호이스팅과 TDZ에 대한 이해는 자바스크립트에서 발생할 수 있는 다양한 오류를 예방하는 데 큰 도움이 될 것이다.
+
+사실 필자는 자바스크립트를 사용하면서 `var` 키워드를 사용해 변수를 선언한 기억이 거의 없다. 현재 개발하는 프로젝트에서도 직접 작성한 변수는 모두 `let`과 `const`를 사용하고 있다. 하지만 레거시 코드에서는 여전히 `var`로 작성된 코드가 많으며, 언젠가 레거시 코드를 봐야 한다면 오늘의 학습이 도움이 될 것이라고 생각한다.
+
+> 오늘의 한줄 : 왠만하면 `const` 를 사용하자
