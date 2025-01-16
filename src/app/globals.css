@@ -16,6 +16,7 @@ body {
 body {
   width: 100%;
   overflow-x: hidden;
+  overflow-y: scroll;
 }
 
 @layer base {
