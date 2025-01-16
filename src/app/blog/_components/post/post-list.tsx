@@ -1,8 +1,12 @@
 import { getPostList } from '@/lib/post';
 import PostCard from './post-card';
 
-export default async function PostList() {
-  const postList = await getPostList();
+interface Props {
+  category?: string;
+}
+
+export default async function PostList({ category }: Props) {
+  const postList = await getPostList(category);
 
   return (
     <section className="mx-auto w-full max-w-[800px]">
