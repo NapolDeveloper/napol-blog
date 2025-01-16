@@ -3,6 +3,7 @@ import path from 'path';
 import matter from 'gray-matter';
 import { HeadingItem, PostMatter } from '@/models/post';
 import dayjs from 'dayjs';
+import { CategoryDetail } from '@/models/category';
 
 const BASE_PATH = 'src/posts';
 const POSTS_PATH = path.join(process.cwd(), BASE_PATH);
@@ -166,4 +167,21 @@ export const getCategoryList = () => {
     const categoryPath = path.join(POSTS_PATH, category);
     return fs.statSync(categoryPath).isDirectory(); // 디렉토리인지 확인
   });
+};
+
+/**
+ * 카테고리 상세 목록을 가져옵니다
+ */
+export const getCategoryDetailList = () => {
+  const categoryList = getCategoryList();
+  const detailList: CategoryDetail[] = [];
+
+  categoryList.forEach(category => {
+    detailList.push({
+      parsedCategoryName: parseCategoryName(category),
+      category: category,
+    });
+  });
+
+  return detailList;
 };

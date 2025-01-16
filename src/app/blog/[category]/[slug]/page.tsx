@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, category } = await params;
   const post = await getPostDetail(category, slug);
 
-  const title = `${post.title} | NAPOL`;
+  const title = `${post.title} | ${siteConfig.name}`;
   const imageUrl = `${siteConfig.url}${post.thumbnail}`;
 
   return {

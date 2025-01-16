@@ -1,11 +1,21 @@
-import { getPostList } from '@/lib/post';
+import { getCategoryDetailList, getPostList } from '@/lib/post';
 import PostCard from './post-card';
+import CategoryList from '../../[category]/_components/category/category-list';
 
-export default async function PostList() {
-  const postList = await getPostList();
+interface Props {
+  category?: string;
+}
+
+export default async function PostList({ category }: Props) {
+  const postList = await getPostList(category);
+  const categoryList = getCategoryDetailList();
 
   return (
     <section className="mx-auto w-full max-w-[800px]">
+      <section className="mb-10">
+        <CategoryList categoryList={categoryList} />
+      </section>
+
       <ul className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {postList.map(post => (
           <li key={post.date + post.url}>
