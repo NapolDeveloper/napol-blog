@@ -25,7 +25,7 @@ export default function IndicatorScroll() {
     <div className="fixed left-0 top-0 w-full">
       <div
         style={{ width: `${completion}%` }} // completion 값을 기반으로 width 조정
-        className="h-1 bg-blue-400 transition-all duration-150"
+        className="h-1 bg-blue-400"
       />
     </div>
   );
