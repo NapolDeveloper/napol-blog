@@ -1,8 +1,8 @@
 export const siteConfig = {
-  name: 'NAPOL',
-  url: 'http://localhost:3000',
+  name: '김현재 | Napol',
+  url: 'https://www.napol.dev',
   ogImage: '추후 추가 필요',
-  description: '프론트 개발자의 개발 블로그',
+  description: '현재가 작성하는 현재의 기록',
 };
 
 export type SiteConfig = typeof siteConfig;
