@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   authors: [
     {
       name: 'Napol',
-      url: '',
+      url: 'https://www.napol.dev',
     },
   ],
   creator: 'Napol',
