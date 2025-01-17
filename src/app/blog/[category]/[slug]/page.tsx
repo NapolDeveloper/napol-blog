@@ -15,8 +15,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, category } = await params;
   const post = await getPostDetail(category, slug);
 
-  const title = `${post.title} | ${siteConfig.name}`;
+  const title = `${post.title}`;
   const imageUrl = `${siteConfig.url}${post.thumbnail}`;
+  console.log(imageUrl, post.thumbnail);
 
   return {
     title,
@@ -28,12 +29,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: 'article',
       publishedTime: post.date.toISOString(),
       url: `${siteConfig.url}${post.url}`,
-      images: [imageUrl],
+      images: imageUrl,
     },
     twitter: {
       title,
       description: post.desc,
-      images: [imageUrl],
+      images: imageUrl,
     },
   };
 }
