@@ -16,7 +16,7 @@ export default async function PostList({ category }: Props) {
         <CategoryList categoryList={categoryList} />
       </section>
 
-      <ul className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <ul className="grid grid-cols-1 gap-6">
         {postList.map(post => (
           <li key={post.date + post.url}>
             <PostCard post={post} />
