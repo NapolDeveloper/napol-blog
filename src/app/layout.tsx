@@ -94,7 +94,7 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <Header />
-          <main className="mx-auto mt-[114px] w-full max-w-[800px] px-6">{children}</main>
+          <main className="mx-auto mt-[114px] min-h-[100vh] w-full max-w-[800px] px-6">{children}</main>
           <Footer />
         </ThemeProvider>
       </body>
