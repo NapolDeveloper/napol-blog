@@ -5,7 +5,6 @@ import { Post } from '@/models/post';
 import { Text } from '@/components/ui/text';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 
-import { Calendar } from 'lucide-react';
 import { parseCategoryName } from '@/lib/post';
 
 interface Props {
@@ -16,34 +15,33 @@ export default function PostCard({ post }: Props) {
   return (
     <>
       <Link href={post.url}>
-        <div className="group flex cursor-pointer flex-col gap-4 sm:flex-row">
-          <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+        <div className="group flex flex-col gap-4 sm:h-full sm:flex-row-reverse sm:items-center">
+          {/* 이미지 */}
+          <div className="relative aspect-video w-full overflow-hidden rounded-md sm:w-[240px] sm:flex-shrink-0">
             <AspectRatio ratio={16 / 9}>
               <Image
-                // !TODO 추후 썸네일 추가시 주석 해제
                 src={post.thumbnail || '/news.png'}
                 alt={`thumbnail for ${post.title}`}
-                sizes="(max-width: 350px), 10vw, 350px 100px"
+                sizes="50vw"
                 fill
                 priority
                 className="rounded-md object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
               />
             </AspectRatio>
           </div>
-          <div className="flex flex-col justify-center">
+
+          {/* 텍스트 */}
+          <div className="relative flex h-full w-full flex-col">
             <Text size="sm">{parseCategoryName(post.category)}</Text>
-            <Text size="2xl" weight="bold" className="mt-2 line-clamp-1 transition group-hover:text-blue-500">
+            <Text size="xl" weight="bold" className="mb-1.5 line-clamp-1 transition group-hover:text-blue-500">
               {post.title}
             </Text>
-            <Text size="sm" color="muted" className="line-clamp-2">
+            <Text size="sm" color="muted" className="mb-2 line-clamp-2 sm:mb-0">
               {post.desc}
             </Text>
-            <div className="mt-4 flex items-center gap-1">
-              <Calendar className="w-3.5 text-muted-foreground" />
-              <Text size="sm" color={'muted'}>
-                {post.dateString}
-              </Text>
-            </div>
+            <Text size="sm" color={'muted'} className="sm:absolute sm:bottom-0">
+              {post.dateString}
+            </Text>
           </div>
         </div>
       </Link>

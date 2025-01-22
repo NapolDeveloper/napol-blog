@@ -76,10 +76,15 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/favicon.ico',
-    shortcut: '/favicon-16x16.png',
-    apple: '/apple-touch-icon.png',
+    // shortcut: '/favicon-16x16.png',
+    // apple: '/apple-touch-icon.png',
   },
   manifest: `${siteConfig.url}/site.webmanifest`,
+  verification: {
+    other: {
+      'naver-site-verification': '9c40f297bb089b11c9605077e36f31c1c8203b19',
+    },
+  },
 };
 
 export default function RootLayout({
@@ -94,7 +99,7 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <Header />
-          <main className="mx-auto mt-[114px] w-full max-w-[800px] px-6">{children}</main>
+          <main className="mx-auto mt-[114px] min-h-[100vh] w-full max-w-[800px] px-6">{children}</main>
           <Footer />
         </ThemeProvider>
       </body>
