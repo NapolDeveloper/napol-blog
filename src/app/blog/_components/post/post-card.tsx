@@ -15,9 +15,9 @@ export default function PostCard({ post }: Props) {
   return (
     <>
       <Link href={post.url}>
-        <div className="group flex flex-col gap-4 p-4 sm:flex-row-reverse sm:items-center">
+        <div className="group flex flex-col gap-4 sm:h-full sm:flex-row-reverse sm:items-center">
           {/* 이미지 */}
-          <div className="relative aspect-video w-full overflow-hidden rounded-lg sm:w-[320px] sm:flex-shrink-0">
+          <div className="relative aspect-video w-full overflow-hidden rounded-md sm:w-[240px] sm:flex-shrink-0">
             <AspectRatio ratio={16 / 9}>
               <Image
                 src={post.thumbnail || '/news.png'}
@@ -31,15 +31,15 @@ export default function PostCard({ post }: Props) {
           </div>
 
           {/* 텍스트 */}
-          <div className="flex flex-col justify-center">
+          <div className="relative flex h-full w-full flex-col">
             <Text size="sm">{parseCategoryName(post.category)}</Text>
-            <Text size="xl" weight="bold" className="mb-2 mt-2 line-clamp-1 transition group-hover:text-blue-500">
+            <Text size="xl" weight="bold" className="mb-1.5 line-clamp-1 transition group-hover:text-blue-500">
               {post.title}
             </Text>
-            <Text size="sm" color="muted" className="mb-4 line-clamp-2">
+            <Text size="sm" color="muted" className="mb-2 line-clamp-2 sm:mb-0">
               {post.desc}
             </Text>
-            <Text size="sm" color={'muted'}>
+            <Text size="sm" color={'muted'} className="sm:absolute sm:bottom-0">
               {post.dateString}
             </Text>
           </div>
