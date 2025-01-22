@@ -5,7 +5,6 @@ import { Post } from '@/models/post';
 import { Text } from '@/components/ui/text';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 
-import { Calendar } from 'lucide-react';
 import { parseCategoryName } from '@/lib/post';
 
 interface Props {
@@ -17,6 +16,19 @@ export default function PostCard({ post }: Props) {
     <>
       <Link href={post.url}>
         <div className="group flex cursor-pointer flex-col gap-4 sm:flex-row">
+          <div className="flex flex-col justify-center">
+            <Text size="sm">{parseCategoryName(post.category)}</Text>
+            <Text size="xl" weight="bold" className="mb-2 mt-2 line-clamp-1 transition group-hover:text-blue-500">
+              {post.title}
+            </Text>
+            <Text size="sm" color="muted" className="mb-4 line-clamp-2">
+              {post.desc}
+            </Text>
+
+            <Text size="sm" color={'muted'}>
+              {post.dateString}
+            </Text>
+          </div>
           <div className="relative aspect-video w-full overflow-hidden rounded-lg">
             <AspectRatio ratio={16 / 9}>
               <Image
@@ -29,21 +41,6 @@ export default function PostCard({ post }: Props) {
                 className="rounded-md object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
               />
             </AspectRatio>
-          </div>
-          <div className="flex flex-col justify-center">
-            <Text size="sm">{parseCategoryName(post.category)}</Text>
-            <Text size="2xl" weight="bold" className="mt-2 line-clamp-1 transition group-hover:text-blue-500">
-              {post.title}
-            </Text>
-            <Text size="sm" color="muted" className="line-clamp-2">
-              {post.desc}
-            </Text>
-            <div className="mt-4 flex items-center gap-1">
-              <Calendar className="w-3.5 text-muted-foreground" />
-              <Text size="sm" color={'muted'}>
-                {post.dateString}
-              </Text>
-            </div>
           </div>
         </div>
       </Link>
