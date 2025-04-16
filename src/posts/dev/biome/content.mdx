@@ -233,6 +233,35 @@ node_modules/eslint-config-next/index.js 에서 `require('@rushstack/eslint-patc
 
 ![biome 시간 측정](/posts/dev/biome/biome-prettier-time.png)
 
+## 그 외
+주로 다룬 내용 외에도 필자가 `Biome` 을 사용하면서 알게된 꿀팁들을 공유하려고 한다.
+
+### reporter
+
+`package.json` 의 `scripts` 에 명령어를 추가할 것이다.
+
+```json
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "biome lint --write",
+    "format": "biome format --write",
+    "reporter": "biome check --reporter=summary"
+  },
+```
+
+`reporter` 명령어를 사용한다면 `Biome`이 친절하게 결과를 리포트 형식으로 제공해준다.
+![reporter 결과](/posts/dev/biome/reporter.png)
+
+### 제외 파일 설정
+`biome.json`에서 제외할 파일들에 대해 설정할 수 있다. 본 포스팅에서는 빈 배열로 진행했지만, 실제 실행결과 `node_modules` 파일까지 분석하는 경우가 있기에 이를 명시해서 검사 파일에서 제외시켜주자.
+
+```json
+// biome.json
+"files": { "ignoreUnknown": false, "ignore": ["node_modules", ".next", ".github", "public"] },
+```
+
 ## 마무리
 
 필자는 현재 진행 중인 프로젝트를 시작한 지 1개월밖에 되지 않은 시점이다. 1개월 전 `eslint`의 버전을 `v9`로 올리면서 여러 가지 어려움을 겪었는데, 그로부터 한 달 만에 `Biome`으로 마이그레이션을 하니 다소 아쉬운 느낌이 들기도 한다.
