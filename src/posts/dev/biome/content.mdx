@@ -1,0 +1,241 @@
+---
+title: 'Biome으로의 마이그레이션 여정'
+desc: biome을 이용해 성능 개선을 해보자
+date: 2025-04-16
+thumbnail: /posts/dev/biome/thumbnail.png
+---
+
+## 들어가며
+
+필자는 바로 이전 글인 [협업을 위한 코드 규칙을 정하자](https://www.napol.dev/blog/dev/formatting) 에서 `eslint` 와 `prettier` 를 이용해 협업에서 중요한 요소인 코드의 품질 관리와 일관성에 대해 다루었다. 이후 여러 자료를 살펴보던 중 `Biome` 라는 새로운 도구에 대해 알게 되었고, `eslint` 와 `prettier` 를 사용하는 프로젝트에서 `Biome` 로 변경하게된 이유와 변경 전후의 성능 차이에 대해 이번 포스팅에서 상세히 작성하려고 한다.
+
+## Biome이란
+
+`Biome`은 JavaScript, TypeScript, JSX, TSX, JSON 등의 언어를 지원하며, 총 293개의 규칙을 제공하는 툴체인이다. 하지만 현재는 컴파일러의 기초 작업 단계에 있으며, 주로 `Code Formatter` 와 `Linter` 기능을 제공하고 있다.
+
+최근 `Biome`의 사용자가 점차 늘어나고 있어 많은 개발자들에게 주목을 받는 프로젝트라고 할 수 있다. ~~참고로 Biome은 prettier에서 개최한 대회에서 우승을 차지한 프로젝트이다~~
+
+![npm trend에서 biome 사용량 증가 차트](/posts/dev/biome/npmtrends.png)
+
+그렇다면 왜 Biome을 사용해야 하는 걸까?
+
+### Biome의 장점
+
+- 빠른 속도 : `Rust`로 구현되어 있어 매우 빠른 속도를 자랑한다. 공식 홈페이지에 따르면 `prettier` 보다 약 `35배` 빠른 속도라고 소개하고 있다.
+
+![biome과 prettier 속도 비교](/posts/dev/biome/biome-speed.png)
+
+- 간편한 설정 : `eslint`, `prettier` 보다 설정이 단순해 빠르게 적용할 수 있다.
+- 다양한 언어 지원 : 여러 언어를 한 번에 관리할 수 있어 편리하다.
+
+[Biome Formatter 소개글](https://biomejs.dev/formatter/)
+[Biome Linter 소개글](https://biomejs.dev/linter/)
+[Biome에서 지원하는 언어 목록](https://biomejs.dev/internals/language-support/)
+
+## 직접 사용해보자
+
+위에서 `Biome`에 대해서 간략하게 알아보았다. 필자는 현재 `eslint` 와 `prettier` 를 사용중인 프로젝트가 있으며, 이 프로젝트를 `Biome`을 사용하도록 마이그레이션 진행을 해보겠다.
+
+### Biome 설치
+
+필자는 **`yarn`** 을 사용하고 있어서 아래의 명령어를 통해 설치했다. 혹시 `yarn` 이 아닌 다른 패키지 매니저를 사용한다면 아래의 공식 문서 페이지를 참고해서 본인의 환경에 맞는 명령어를 사용하면 된다.
+
+[Biome 설치 가이드](https://biomejs.dev/guides/getting-started/)
+
+```bash
+yarn add --dev --exact @biomejs/biome
+```
+
+모듈이 설치되었다면 설정 파일을 생성해야 한다. 아래 명령어를 통해 생성하자.
+
+```bash
+yarn biome init
+```
+
+명령어 실행이 완료되었다면 root 디렉토리에 `biome.json` 이 생성되었을 것이다.
+
+```json
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "vcs": {
+    "enabled": false,
+    "clientKind": "git",
+    "useIgnoreFile": false
+  },
+  "files": {
+    "ignoreUnknown": false,
+    "ignore": []
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "tab"
+  },
+  "organizeImports": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double"
+    }
+  }
+}
+```
+
+다음으로는 Biome 플러그인을 설치한다.
+
+![biome 익스텐션 설치](/posts/dev/biome/biome-extension.png)
+
+설치를 하지 않으면 `biome` 에러가 발생하지 않는다.
+![biome 익스텐션 설치 전](/posts/dev/biome/biome-extension.png)
+설치후에는 `biome` 에서 에러를 발생한다.
+![biome 익스텐션 설치 후](/posts/dev/biome/biome-extension.png)
+
+### eslint, prettier 마이그레이션
+
+기존 프로젝트에 있던 설정들을 `biome.json` 으로 옮겨보자.
+
+아래 명령어를 통해 기존 `eslint` 설정을 `biome.json` 으로 가져올 수 있다. 하지만 필자의 환경에서는 에러가 발생하고 마이그레이션이 작동하지 않았다.
+![biome 마이그레이션 에러](/posts/dev/biome/migrate-error.png)
+
+아직 `Biome` 은 아직 레퍼런스가 많지 않아서 혹시라도 필자의 글을 보는 독자들은 이 에러를 해결하는데 도움이 되고자 해결 방법도 함께 작성했다.
+
+해결 방법은 아래와 같다.
+
+node_modules/eslint-config-next/index.js 에서 `require('@rushstack/eslint-patch/modern-module-resolution')` 를 주석처리 후 다시 마이그레이션 명령어를 실행하면 작동한다.
+
+명령어를 실행하면 아래 코드처럼 자동으로 `biome.json` 의 설정이 적용된다.
+
+```json
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "vcs": { "enabled": false, "clientKind": "git", "useIgnoreFile": false },
+  "files": { "ignoreUnknown": false, "ignore": [] },
+  "formatter": {
+    "enabled": true,
+    "useEditorconfig": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 100,
+    "attributePosition": "auto",
+    "bracketSpacing": true
+  },
+  "organizeImports": { "enabled": true },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": false,
+      "a11y": {
+        "noAriaUnsupportedElements": "warn",
+        "noBlankTarget": "error",
+        "useAltText": "warn",
+        "useAriaPropsForRole": "warn",
+        "useValidAriaProps": "warn",
+        "useValidAriaValues": "warn"
+      },
+      "complexity": {
+        "noExtraBooleanCast": "error",
+        "noMultipleSpacesInRegularExpressionLiterals": "error",
+        "noUselessCatch": "error",
+        "noUselessTypeConstraint": "error",
+        "noWith": "error"
+      },
+      "correctness": {
+        "noChildrenProp": "error",
+        "noConstAssign": "off",
+        "noConstantCondition": "error",
+        "noEmptyCharacterClassInRegex": "error",
+        "noEmptyPattern": "error",
+        "noGlobalObjectCalls": "off",
+        "noInvalidBuiltinInstantiation": "off",
+        "noInvalidConstructorSuper": "off",
+        "noNewSymbol": "off",
+        "noNonoctalDecimalEscape": "error",
+        "noPrecisionLoss": "error",
+        "noSelfAssign": "error"
+        // ...
+      },
+      "security": { "noDangerouslySetInnerHtmlWithChildren": "error" },
+      "style": {
+        "noArguments": "error",
+        "noNamespace": "error",
+        "noVar": "error",
+        "useAsConstAssertion": "error",
+        "useBlockStatements": "off",
+        "useConst": "error"
+      },
+      "suspicious": {
+        "noAsyncPromiseExecutor": "error",
+        "noCatchAssign": "error",
+        "noClassAssign": "off",
+        "noCommentText": "error",
+        "noCompareNegZero": "error",
+        "noControlCharactersInRegex": "error",
+        "noDebugger": "error",
+        "noDuplicateCase": "error",
+        "noDuplicateClassMembers": "off",
+        "noDuplicateJsxProps": "error",
+        "noDuplicateObjectKeys": "off",
+        "noDuplicateParameters": "off"
+        // ...
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "jsxQuoteStyle": "double",
+      "quoteProperties": "asNeeded",
+      "trailingCommas": "all",
+      "semicolons": "always",
+      "arrowParentheses": "asNeeded",
+      "bracketSameLine": false,
+      "quoteStyle": "single",
+      "attributePosition": "auto",
+      "bracketSpacing": true
+    },
+    "globals": [
+      "OffscreenCanvas",
+      "onpointerleave",
+      "onemptied",
+      "onkeypress",
+      "onloadeddata",
+      "onmouseup"
+      //      ...
+    ]
+  }
+}
+```
+
+## 성능 측정
+
+`Biome` 설정과 마이그레이션이 완료 되었으니 가장 중요한 성능 측정을 했다.
+
+### eslint와 biome 성능 측정
+
+기존 `eslint`를 사용할 때 작업 시간은 약 `2.17초`였으나, `Biome`을 사용하니 `0.17초`로 약 92.17% 작업 시간이 단축되었다.
+
+![eslint 시간 측정](/posts/dev/biome/eslint-time.png)
+
+![biome 시간 측정](/posts/dev/biome/biome-eslint-time.png)
+
+### prettier와 biome 성능 측정
+
+기존 `prettier` 사용 시 작업 시간은 약 `1.43초`였으나, `Biome`을 사용하니 `0.16초`로 약 88.81% 작업 시간이 단축되었다.
+
+![prettier 시간 측정](/posts/dev/biome/prettier-time.png)
+
+![biome 시간 측정](/posts/dev/biome/biome-prettier-time.png)
+
+## 마무리
+
+필자는 현재 진행 중인 프로젝트를 시작한 지 1개월밖에 되지 않은 시점이다. 1개월 전 `eslint`의 버전을 `v9`로 올리면서 여러 가지 어려움을 겪었는데, 그로부터 한 달 만에 `Biome`으로 마이그레이션을 하니 다소 아쉬운 느낌이 들기도 한다.
+![한달만에 마이그레이션이라니...](/posts/dev/biome/last.png)
+
+하지만 이번 경험을 통해 더 빠르고 효율적인 도구를 발견했다는 점에서 긍정적으로 생각한다. 앞으로 `Biome`이 더욱 안정화되고 기능이 확장된다면, 협업 환경에서 코드 품질 관리와 개발 생산성 향상에 큰 도움이 될 것으로 기대한다. 필자는 앞으로도 새로운 기술과 도구들을 꾸준히 탐색하며 더 나은 개발 환경을 만드는 데 힘쓸 것이다.
