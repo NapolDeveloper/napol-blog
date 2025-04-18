@@ -9,6 +9,7 @@ interface Props {
 export default async function PostList({ category }: Props) {
   const postList = await getPostList(category);
   const categoryList = getCategoryDetailList();
+  console.log(postList);
 
   return (
     <section className="mx-auto w-full max-w-[800px]">
