@@ -141,6 +141,11 @@ export const getPostList = async (category?: string) => {
   const postPaths = getPostPaths(category);
   const postList = await Promise.all(postPaths.map(postPath => parsePost(postPath)));
 
+  // 최신글이 앞쪽에 오도록 정렬
+  postList.sort((a, b) => {
+    return new Date(b.date).getTime() - new Date(a.date).getTime(); // 날짜 기준 내림차순 정렬
+  });
+
   return postList;
 };
 
