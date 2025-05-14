@@ -1,0 +1,204 @@
+---
+title: '나만의 Linter 구현하기 - 2'
+desc: Linter는 어떻게 구현되어 있을지 파악하고 직접 구현해보자
+date: 2025-05-14
+thumbnail: /posts/dev/linter-02/thumbnail.png
+---
+
+## 들어가며
+
+앞선 포스팅에서는 Linter를 구현하기 위해 렉싱과 파싱, 토큰, AST와 같은 주요 용어들에 대해 살펴보았다. 이번 포스팅에서는 자바스크립트를 이용해 Linter의 주요 모듈인 파서와 러너를 구현하려고 한다.
+
+## Linter 구현하기
+
+Linter에 필요한 모든 기능을 처음부터 직접 구현하는 것은 리소스 소모가 크기 때문에, 이번에는 주요 모듈들의 내부 동작을 간략히 학습한 뒤 이를 활용하는 방식으로 접근하려 한다.
+
+사용할 모듈은 아래와 같다. 이 포스팅을 따라 실습하고자 한다면, 아래 모듈들을 본인의 패키지 매니저에 맞게 설치해두자.
+
+- @babel/parser : 우리가 작성한 코드를 AST로 변환하는 파서이다.
+- @babel/traverse : AST를 순회하면서 노드를 분석/수정할 수 있는 모듈이다.
+
+### Linter 폴더 구조
+
+Linter 구현에 앞서, 전체 프로젝트 구조와 각 파일의 역할을 정리해보자.
+
+**src**
+
+Linter의 핵심 기능들이 담긴 모듈들을 포함한다.
+
+- config.js : 루트 디렉토리에 있는 `.lintrc.json` 파일을 읽어와 설정을 로드하는 역할을 한다.
+- lint.js : 메인 실행 파일로, 입력된 파일을 읽고 AST로 파싱한 후 설정된 룰들을 실행한다.
+- runner.js : AST와 룰 목록을 받아와서 각 노드에 대해 룰을 적용한다.
+- parse.js : JS 코드를 추상 구문 트리(AST)로 변환한다.
+
+**rules**
+
+Linter가 적용할 다양한 규칙들을 각각의 모듈로 정의하는 폴더이다. 이번 포스팅에서는 아래 두 가지 룰을 구현할 것이다.
+
+- no-var.js : `var` 키워드 사용을 감지하고 `let` 또는 `const` 사용을 권장한다.
+- no-console.js : `console.log` 사용을 감지하고, 개발 완료 시 제거할 것을 권장한다.
+
+**samples**
+
+Linter 기능을 테스트할 샘플 코드 파일들을 보관하는 폴더이다.
+
+### 파서 구현하기
+
+먼저 JS 코드를 AST로 변환하기 위해 `@babel/parser` 를 사용할 것이다. `@babel/parser` 는 Babel 프로젝트에서 제공하는 공식 JS 파서이며, 최신 문법을 안정적으로 지원하기 때문에 채택했다.
+
+[@babel/parser 공식문서](https://babeljs.io/docs/babel-parser)
+
+```jsx
+yarn add @babel/parser
+// or
+npm install @babel/parser
+```
+
+모듈을 설치했다면 간단한 예제를 작성해 보자.
+
+먼저 사용할 모듈들과 Linter를 통해 검사할 파일 경로를 CLI 입력을 통해 받아온다. 파일 경로를 입력하지 않았을 경우 예외처리를 통해 프로세스를 종료해준다.
+
+```jsx
+// src/parse.js
+const fs = require('fs');
+const parser = require('@babel/parser');
+
+// 분석할 파일 경로를 CLI로 받기
+// ex) node src/parse.js samples/sample.js
+const filePath = process.argv[2];
+
+// 파일을 입력하지 않았을 경우 예외처리
+if (!filePath) {
+  console.error('Usage: node src/parse.js <filename>');
+  process.exit(1);
+}
+```
+
+다음으로 분석할 파일이 해당 경로에 있다면 `utf-8` 형식으로 읽어온다. 읽어온 문자열을 `parser.parse` 의 인자로 전달해준다. 참고로 `parser.parse` 는 다음과 같은 타입을 가지고 있다.
+
+> babelParser.parse(code, [options]);
+
+더욱 자세히 알아보고 싶다면 위 공식문서를 참고하자.
+
+```jsx
+// src/parse.js
+
+// JS 코드를 문자열로 읽어옴
+const code = fs.readFileSync(filePath, 'utf-8');
+
+// Babel 파서로 코드 → AST 변환
+const ast = parser.parse(code, {
+  sourceType: 'unambiguous', // babel이 'script' 또는 'module' 자동 판별
+  plugins: ['jsx'], // JSX 필요 시 활성화
+});
+
+// 결과 출력
+// AST 객체를 JSON 문자열로 보기 좋게 출력
+console.log(JSON.stringify(ast, null, 2));
+```
+
+다음으로는 AST로 변환할 JS 코드를 작성한다. 다음 포스팅에서 `var` 키워드 사용 금지와 `console.log()` 함수 사용 금지에 대해 룰을 작성할 예정이기 때문에 다음과 같이 테스트 코드를 작성했다.
+
+```jsx
+// samples/sample.js
+
+var x = 42;
+console.log(x);
+```
+
+여기까지 작성했다면 아래 명령어를 실행하여 JS 코드를 AST로 변환한 결과를 확인할 수 있다.
+
+```jsx
+node src/parse.js samples/sample.js
+```
+
+결과값은 아래 코드처럼 트리 형태의 값이 나오게 된다.
+
+```jsx
+{
+  "type": "File",
+  "start": 0,
+  "end": 28,
+  "loc": {
+    "start": {
+      "line": 1,
+      "column": 0,
+      "index": 0
+    },
+    "end": {
+      "line": 3,
+      "column": 0,
+      "index": 28
+    }
+  },
+  "errors": [],
+  // ...
+  // 수많은 코드들
+  // ...
+  "comments": []
+}
+```
+
+파싱 로직이 잘 작동하는 것을 확인 했으니 추후 메인 함수 실행시 AST를 반환하도록 코드를 아래와 같이 수정해주자.
+
+```jsx
+import fs from 'node:fs';
+import parser from '@babel/parser';
+
+export function parse(filePath) {
+  if (!filePath) {
+    console.error('Usage: node src/parse.js <filename>');
+    process.exit(1);
+  }
+
+  const code = fs.readFileSync(filePath, 'utf-8');
+
+  // Babel 파서로 코드 → AST 변환
+  const ast = parser.parse(code, {
+    sourceType: 'unambiguous', // module, script를 자동 판단
+    plugins: ['jsx'],
+  });
+
+  return ast;
+}
+```
+
+### 러너 구현하기
+
+이제 각 규칙들을 AST에 적용하여 코드 분석을 수행하는 러너함수를 구현해보자.
+
+러너 함수는 다음과 같은 기능을 수행한다.
+
+- 룰을 순회하며 각 룰에 전달할 context 객체를 생성한다.
+- visitors 상수에 ruleModule의 create 메서드의 반환값을 할당한다. create 메서드는 다음 포스트에 작성할 예정이다.
+- traverse를 통해 AST를 순회하며 visitors를 실행한다.
+
+```jsx
+import _traverse from '@babel/traverse'; // Babel의 AST 순회 모듈
+const traverse = _traverse.default;
+
+// AST와 룰 목록을 받아와서 각 룰을 적용하는 메인 함수
+export function runRules(ast, rules) {
+  // 룰을 순회하며 룰에 전달할 context를 생성한다
+  rules.forEach(ruleModule => {
+    const context = {
+      report({ message, loc }) {
+        const prefix = ruleModule.level === 'error' ? '✖ ERROR' : '⚠ WARN';
+        console.log(`[${ruleModule.meta.name}] ${prefix}: ${message} (line: ${loc.line}, column: ${loc.column})`);
+      },
+    };
+
+    //
+    const visitors = ruleModule.create(context);
+    traverse(ast, visitors);
+  });
+}
+```
+
+혹시 `@babel/traverse` 를 `import traverse from '@babel/traverse'` 로 사용하려다가 `traverse is not a function` 에러를 마주하게 되었다면 아래 이슈를 참고하여 필자가 작성한 방식대로 변경하도록 하자.
+
+[@babel/traverse import error](https://github.com/babel/babel/issues/13855)
+
+## 마무리
+
+이번 포스팅에서는 Linter의 주요 모듈인 파서와 러너를 구현해보았다. 다음 포스팅에서는 지금까지 구현한 모듈들을 실행시켜줄 메인 함수와 커스텀 룰을 작성해서 실제 코드에 룰을 적용시켜보는 것 까지 구현할 예정이다.
