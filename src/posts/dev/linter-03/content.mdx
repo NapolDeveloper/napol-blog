@@ -1,0 +1,171 @@
+---
+title: '나만의 Linter 구현하기 - 3'
+desc: Linter는 어떻게 구현되어 있을지 파악하고 직접 구현해보자
+date: 2025-07-14
+thumbnail: /posts/dev/linter-03/thumbnail.png
+---
+
+## 들어가며
+
+지난번에 `나만의 Linter 구현하기 - 2` 를 작성하고 나서, 정신없이 기말고사와 캡스톤 디자인, 그리고 사이드 프로젝트까지.. 정말 바빠서 아쉽게도 시리즈를 마무리 짓지 못했었다. 이제야 시간적 여유가 생겨서 얼른 이 포스팅을 마무리 지어보려고 한다.
+
+![너무 바빴다...](/posts/dev/linter-03/rest.jpg)
+
+## 규칙 구현하기
+
+먼저 우리의 린터에서 사용할 규칙을 정의해 볼것이다. 필자는 실제 프로젝트에서 빈번히 사용되는 2가지의 규칙을 정의해 보았다.
+
+먼저 코드 내부에서 `var` 키워드를 사용해서 변수를 선언하지 못하도록 막는 규칙이다. 이 규칙은 파싱한 코드의 노드들을 순회하며 `var` 키워드를 발견하면 설정한 메시지를 출력한다. 코드의 자세한 설명은 주석으로 작성해두었다.
+
+```javascript title=rules/no-var.js
+export default {
+  // 규칙 기본 정보
+  meta: {
+    name: 'no-var',
+    description: "'var'를 사용하지 마세요.",
+  },
+  /**
+   * 규칙 실행 시 호출되는 팩토리 함수
+   * Linter 시스템이 context 객체를 넘겨줌
+   */
+  create(context) {
+    // AST 탐색 로직을 담은 visitor 객체 반환
+    return {
+      // VariableDeclaration : 탐색 위치
+      VariableDeclaration(path) {
+        // 감지 조건
+        if (path.node.kind === 'var') {
+          // 문제 발견 시 Linter 시스템에 리포트
+          context.report({
+            message: "'var' 대신 'let' 또는 'const'를 사용하세요.",
+            loc: path.node.loc.start, // 코드상의 위치 (줄, 열)
+          });
+        }
+      },
+    };
+  },
+};
+```
+
+다음 규칙은 코드 내부에 `console.log` 를 사용하지 못하게 하는 규칙이다. 보통 프로덕션 레벨의 프로젝트에서는 `console.log` 를 전부 제거하고 배포하기 때문에 이 규칙을 선정했다.
+
+```javascript title=rules/no-console.js
+export default {
+  meta: {
+    name: 'no-console',
+    description: 'console.log를 사용하지 마세요.',
+  },
+  create(context) {
+    return {
+      MemberExpression(path) {
+        if (path.node.object.name === 'console' && path.node.property.name === 'log') {
+          context.report({
+            message: 'console.log를 지워주세요.',
+            loc: path.node.loc.start,
+          });
+        }
+      },
+    };
+  },
+};
+```
+
+위 두 코드를 보면 코드 구조가 굉장히 유사하지만 한 부분이 다르다는 것을 알 수 있다. 바로 반환문 바로 다음에 있는 `MemberExpression` 과 `VariableDeclaration` 이다. 각각의 역할은 다음과 같다.
+
+| 노드 이름             | 설명                                  | 주요 탐지 대상         |
+| --------------------- | ------------------------------------- | ---------------------- |
+| `MemberExpression`    | 객체의 속성 접근 (e.g. `console.log`) | `console.log`, `obj.x` |
+| `VariableDeclaration` | 변수 선언 구문                        | `var`, `let`, `const`  |
+
+즉 AST에서 특정 문법을 잡아내기 위해 사용하는 AST 탐색 객체이다. 각 객체는 해당 노드 타입이 AST에서 방문될 때 실행할 콜백 함수가 등록된 노드 타입이다.
+
+### 규칙 등록하기
+
+이제 구현한 규칙을 등록해서 사용할 수 있도록 하는 파일들을 작성해보자. 먼저 `.lintrc.json` 파일을 생성해서 내부에 사용할 규칙 목록을 작성해보았다. 우리가 구현한 린터는 이 파일을 기반으로 어떤 코드 스타일 위반을 `error` 로 볼지 또는 `warn` 으로 볼지 결정하게 된다.
+
+```json
+{
+  "rules": {
+    "no-var": "error",
+    "no-console": "warn"
+  }
+}
+```
+
+그리고 린터가 실행될 때 어떤 규칙을 적용할지 결정하는 파일을 작성한다.
+
+```javascript title=config.js
+import fs from 'node:fs';
+import path from 'node:path';
+
+export function loadConfig() {
+  const configPath = path.resolve('.lintrc.json');
+
+  // configPath에 파일이 존재하지 않으면 빈 설정 반환
+  if (!fs.existsSync(configPath)) {
+    return {};
+  }
+
+  // 설정 파일을 문자열로 읽고 자바스크립트 객체로 변환
+  const raw = fs.readFileSync(configPath, 'utf-8');
+  return JSON.parse(raw);
+}
+```
+
+위 `config.js` 까지 작성했다면 이제 정말 마지막이다. 코드를 파싱해서 순회하며 룰을 적용시키는 즉 지금까지 만든 파일들을 모두 작동시켜줄 루트 파일을 작성해야 한다.
+
+```javascript title=lint.js
+import { parse } from './parse.js';
+
+import { runRules } from './runner.js';
+import { loadConfig } from './config.js';
+
+import noVar from '../rules/no-var.js';
+import noConsole from '../rules/no-console.js';
+
+// 룰 모듈 로딩
+const ruleModules = {
+  'no-var': noVar,
+  'no-console': noConsole,
+};
+
+// 분석할 파일 경로를 CLI로 받기
+// ex) node src/lint.js samples/sample.js
+const filePath = process.argv[2];
+
+const ast = parse(filePath);
+const config = loadConfig();
+
+// 설정된 룰만 실행
+const enableRules = Object.entries(config.rules || {})
+  .map(([ruleName, level]) => {
+    const rule = ruleModules[ruleName];
+    if (!rule) return null;
+
+    return {
+      ...rule,
+      level,
+    };
+  })
+  .filter(Boolean);
+
+runRules(ast, enableRules);
+```
+
+이 코드를 위에서부터 해석하면 사용할 규칙들을 객체로 생성한다. 그리고 검사할 파일의 경로를 CLI를 통해 받아와서 파서에게 넘겨주어 AST를 생성한다. 이후 설정된 룰만 실행될 수 있도록 객체를 만들어 러너에게 넘겨준다.
+
+자 그럼 지금까지 작성한 코드를 실행해보기 위한 예시 파일을 작성해보자. 파일 위치는 `samples/sample.js` 이다.
+
+```javascript title=sample.js
+const x = 42;
+var a = 109;
+console.log(x);
+```
+
+드디어 우리의 린터를 실행시켜볼 수 있다. 아래 이미지처럼 명령어를 입력하면 어느 줄에서 에러가 발생했고 우리가 설정한 메시지가 출력되는 것을 볼 수 있다.
+
+![CLI](/posts/dev/linter-03/linter-result.png)
+
+## 마무리
+
+이렇게 간단한 린터를 직접 구현해가며 우리가 프로젝트에서 자주 사용하는 eslint의 동작을 얕게나마 파악할 수 있었다. 다음 포스팅은 필자가 현재 개발중인 프로젝트에서의 경험에 대한 글을 작성해보려고 생각중이다. 다음 글도 많은 독자분들께 도움이 되는 글이기를 바라면 이번 포스팅은 여기서 마무리를 짓겠다.
