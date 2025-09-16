@@ -5,8 +5,7 @@ import ThemeToggle from '../shared/theme-toggle';
 import IndicatorScroll from '../shared/indicator-scroll';
 
 const NAV_LIST = [
-  { name: 'Napol', path: '/blog' },
-  // { name: 'Home', path: '/home' },
+  { name: 'Napol', path: '/' },
   { name: 'Blog', path: '/blog' },
 ];
 

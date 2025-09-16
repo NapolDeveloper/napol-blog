@@ -39,7 +39,7 @@ export const getPostPaths = (category?: string): string[] => {
   };
 
   traverseDirectory(targetPath);
-
+  console.log(mdxPaths);
   return mdxPaths;
 };
 
@@ -189,4 +189,13 @@ export const getCategoryDetailList = () => {
   });
 
   return detailList;
+};
+
+/**
+ * 포스트 위치를 기반으로 포스트를 가져옵니다
+ */
+export const getPostByPath = async (path: string) => {
+  const post = await parsePost(path);
+
+  return post;
 };

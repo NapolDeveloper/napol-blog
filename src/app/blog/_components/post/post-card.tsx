@@ -32,7 +32,9 @@ export default function PostCard({ post }: Props) {
 
           {/* 텍스트 */}
           <div className="relative flex h-full w-full flex-col">
-            <Text size="sm">{parseCategoryName(post.category)}</Text>
+            <Text size="sm" color="muted">
+              {parseCategoryName(post.category)}
+            </Text>
             <Text size="xl" weight="bold" className="mb-1.5 line-clamp-1 transition group-hover:text-blue-500">
               {post.title}
             </Text>
