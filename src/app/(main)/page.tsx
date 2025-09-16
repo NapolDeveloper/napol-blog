@@ -7,6 +7,7 @@ export default function MainPage() {
       <RecentPost />
 
       <div className="h-10 w-full" />
+
       <MainPost />
     </>
   );

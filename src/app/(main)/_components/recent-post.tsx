@@ -7,10 +7,10 @@ export default async function RecentPost() {
 
   return (
     <section className="mx-auto w-full max-w-[800px]">
-      <Text size="xl" weight="bold">
+      <Text size="xl" weight="bold" className="border-b border-white">
         Recent Posts
       </Text>
-      <ul className="mt-6 grid grid-cols-3 gap-6">
+      <ul className="mt-6 grid grid-cols-1 gap-6">
         {postList.map(post => (
           <li key={post.date + post.url}>
             <PostCard post={post} />

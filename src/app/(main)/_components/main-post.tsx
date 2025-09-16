@@ -4,8 +4,8 @@ import PostCard from './post-card';
 
 const Main = [
   'src/posts/dev/biome/content.mdx',
-  'src/posts/deep_dive/hoisting/content.mdx',
   'src/posts/deep_dive/seo/content.mdx',
+  'src/posts/deep_dive/hoisting/content.mdx',
 ];
 
 export default async function MainPost() {
@@ -14,10 +14,10 @@ export default async function MainPost() {
 
   return (
     <section className="mx-auto w-full max-w-[800px]">
-      <Text size="xl" weight="bold">
+      <Text size="xl" weight="bold" className="border-b border-white">
         Main Posts
       </Text>
-      <ul className="mt-6 grid grid-cols-3 gap-6">
+      <ul className="mt-6 grid grid-cols-1 gap-6">
         {postList.map(post => (
           <li key={post.date + post.url}>
             <PostCard post={post} />
