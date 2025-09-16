@@ -1,0 +1,65 @@
+---
+title: '아직도 Next.js를 왜 사용하냐고 하면 SSR만 얘기하시나요?'
+desc: Next.js를 사용하게 된 이유에 대해 알아보자
+date: 2025-09-17
+thumbnail: /posts/deep_dive/nextjs/thumbnail.png
+---
+
+## 들어가며
+
+우리는 왜 Next.js를 사용하고 있을까?
+
+많은 블로그에서 Next.js를 사용하는 이유로 `'Server Side Rendering(이하 SSR)'`을 주로 언급하고 있다.
+필자 또한 SSR이 Next.js를 사용하는 이유 중 하나라고 생각하지만, SSR만이 Next.js를 사용하는 이유가 아니라고 생각하기에 이 포스팅을 작성했다.
+
+## React.js
+
+React.js 공식 홈페이지에 가면 React를 `'The library for web and native user interfaces'`라고 소개한다. 즉, React는 사용자 인터페이스(UI)를 다루는 것이 목적인 라이브러리다.
+
+실제로 React에서는 UI 관련 기능을 제공해왔으며, 그 외의 대부분의 기능들은 서드파티 라이브러리를 이용했다.
+당장 라우팅을 생각해도 `react-router-dom`같은 라이브러리가 생각나지 않는가?
+
+[React.js 공식 문서](https://react.dev/)
+
+## Next.js
+
+Next.js 공식 홈페이지에서는 `'The React Framework for the Web'`라는 문구가 우릴 반겨준다.
+
+그 아래에는 `'Used by some of the world's largest companies, Next.js enables you to create high-quality web applications with the power of React components.'`라는 추가 문구가 있다.
+
+이 문장들을 해석해보면 Next.js는 단순히 UI를 위한 라이브러리가 아니고, React 컴포넌트의 강력한 기능을 활용해 웹 어플리케이션을 만들 수 있도록 돕는 `프레임워크`라는 점을 알 수 있다.
+
+[Next.js 공식 문서](https://nextjs.org/)
+
+### Next.js에서 제공하는 기능
+
+위 글에서 알 수 있다시피 Next.js는 SSR 이외에도 React를 활용해 웹 어플리케이션을 개발할 수 있는 다양한 기능을 제공한다.
+
+Next.js 공식 문서에서는 웹 어플리케이션을 만들기 위해 아래 내용들이 필요하며 Next.js 기능을 점진적으로 도입하여 이를 해결할 수 있다고 설명한다.
+
+[Next.js에서 제공하는 기능](https://nextjs.org/learn/react-foundations/what-is-react-and-nextjs)
+
+- User Interface
+- Routing
+- Data Fetching
+- Rendering
+- Integrations
+- Infrastructure
+- Scalability
+- Developer Experience
+
+포스팅 작성 초반에 언급한 SSR은 위 기능 중 Rendering에 포함된다.
+
+### Next.js를 사용하는 이유
+
+React.js를 사용해 개발해본 경험이 있다면 다음과 같은 문제를 직면한 적이 있을 것이다.
+
+특정 기능을 구현하기 위해 라이브러리를 찾아보면 너무 많은 라이브러리가 있으며, 각각 지원하는 React.js 버전도 다르며, 최신 버전에 맞춰 업데이트되지 않은 레거시 라이브러리를 마주치기도 한다.
+
+또한, 어떤 구조로 프로젝트를 관리해야 할지 막막했던 경험도 있을 것이다. 개발자마다 방식이 달라 통일성을 유지하기 어려웠을 것이며 이러한 불편함을 느껴왔다면 Next.js로 웹 어플리케이션을 개발하는 것이 좋은 선택이 될 수 있다.
+
+결론적으로 Next.js는 웹 어플리케이션을 개발하기 위한 주요 기능들을 내장해서 제공하기 때문에 더 이상 여러 서드파티 라이브러리에 의존하지 않아도 된다. 또한, 공식 문서에서 레이아웃, 로딩, 에러 처리 등 파일 구조를 구성하는 방법까지 명확하게 제공해주므로 프로젝트의 규모가 커지거나 여러 명이 동시에 작업하는 상황에서 큰 이점으로 다가올 것이다.
+
+## 마무리
+
+필자 또한 SEO 관점에서 SSR을 중요하게 생각하기도 하고, 검색엔진에서도 이를 권장하다 보니 Next.js를 사용하기 시작했다. 하지만 Next.js가 단순히 SSR만을 위한 프레임워크가 아니라, 다양한 기능을 제공하고 어떤 문제를 해결하고자 하는지 고민해 본다면, 앞으로 Next.js를 사용한 개발 경험이 더 좋아질 것이라고 생각하며 이번 포스팅을 마친다.
